@@ -64,7 +64,7 @@ class MultiHeadAttention(nn.Module):
             if self.cache_k is None or self.cache_k.size(0) != b:
                 self.cache_k = torch.zeros(b, self.num_heads,
                                            self.window_size, self.head_dim,
-                                           device=x.device)
+                                           device=x.device, dtype=keys_new.dtype)
                 self.cache_v = torch.zeros_like(self.cache_k)
                 self.ptr_cur = 0  # pointer to next free slot
 
@@ -323,7 +323,8 @@ def generate_text_simple_cached(model, idx, max_new_tokens, context_size=None, u
 
             # can't generate more than ctx_len of result
             # due to the limitation of position embedding
-            max_generable = ctx_len - input_tokens_length
+            # (+1 because the last generated token is not fed back into the model)
+            max_generable = ctx_len - input_tokens_length + 1
             max_new_tokens = min(max_new_tokens, max_generable)
 
             for step in range(max_new_tokens):
